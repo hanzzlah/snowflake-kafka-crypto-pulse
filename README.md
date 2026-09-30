@@ -4,27 +4,6 @@ A Lambda architecture pipeline that streams live cryptocurrency trade ticks (BTC
 
 ---
 
-## Architecture
-
-```
-Binance WebSocket
-      │
-      ▼
-kafka-producer.py  ──►  Kafka (price_ticks)  ──►  Snowflake Kafka Connector
-                                                          │
-                                                          ▼
-                                                     TICKS_LIVE
-                                                          │
-                                          ┌───────────────┴───────────────┐
-                                          ▼                               ▼
-                               TASK_AGGREGATE_1MIN_TICKS        TASK_PRICE_ALERTS
-                               (TICKS_1MIN_AGG)                 (PRICE_ALERTS)
-
-batch-ingest.py  ──►  DAILY_CANDLES + NEWS_RAW  ──►  SP_GENERATE_BASELINE  ──►  DAILY_BASELINE
-
-                                          ▼
-                               V_DASHBOARD_LIVE  ──►  Streamlit App
-```
 
 ### Diagram
 
