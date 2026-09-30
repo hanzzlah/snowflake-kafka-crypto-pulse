@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# secrets
+.env
+
+
+# streamlit
+.streamlit/
+
+# RSA Security Keys
+*.p8
+*.pub
+rsa_key*
+
+# Snowflake streaming config
+config/snowflake-sink.json
