@@ -26,6 +26,83 @@ batch-ingest.py  ──►  DAILY_CANDLES + NEWS_RAW  ──►  SP_GENERATE_BAS
                                V_DASHBOARD_LIVE  ──►  Streamlit App
 ```
 
+### Diagram
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#0f1115",
+    "primaryColor": "#1c1f26",
+    "primaryBorderColor": "#8a93a3",
+    "primaryTextColor": "#e8eaed",
+    "secondaryColor": "#1c1f26",
+    "secondaryBorderColor": "#8a93a3",
+    "secondaryTextColor": "#e8eaed",
+    "tertiaryColor": "#1c1f26",
+    "tertiaryTextColor": "#e8eaed",
+    "lineColor": "#9aa3b2",
+    "clusterBkg": "#15171c",
+    "clusterBorder": "#5b6472",
+    "titleColor": "#e8eaed",
+    "clusterTextColor": "#e8eaed",
+    "nodeTextColor": "#e8eaed",
+    "edgeLabelBackground": "#0f1115",
+    "fontFamily": "Helvetica, Arial, sans-serif",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TB
+
+    BINANCE_WS["Binance WebSocket\nBTC / ETH / SOL"]
+    BINANCE_REST["Binance REST API\nOHLCV Candles"]
+    NEWS["NewsAPI\nHeadlines"]
+
+    subgraph SPEED["Speed Layer"]
+        KP["kafka-producer.py"]
+        KAFKA[("Kafka\nprice_ticks")]
+        SKC["Snowflake\nKafka Connector"]
+        TICKS[("TICKS_LIVE")]
+        T1["TASK_AGGREGATE_1MIN_TICKS"]
+        AGG[("TICKS_1MIN_AGG")]
+        T2["TASK_PRICE_ALERTS\n(every 1 min)"]
+        ALERTS[("PRICE_ALERTS")]
+    end
+
+    subgraph BATCH["Batch Layer"]
+        BI["batch-ingest.py"]
+        CANDLES[("DAILY_CANDLES")]
+        NEWSRAW[("NEWS_RAW\n+ VADER sentiment")]
+        SP["SP_GENERATE_BASELINE\n(daily, midnight PKT)"]
+        BASELINE[("DAILY_BASELINE\nARIMA forecast")]
+    end
+
+    subgraph SERVE["Serving Layer"]
+        VIEW["V_DASHBOARD_LIVE"]
+        APP["Streamlit App\n(Snowflake Native App)"]
+    end
+
+    BINANCE_WS --> KP --> KAFKA --> SKC --> TICKS
+    TICKS --> T1 --> AGG
+    TICKS --> T2
+
+    BASELINE --> T2
+    T2 --> ALERTS
+
+    BINANCE_REST --> BI
+    NEWS --> BI
+    BI --> CANDLES
+    BI --> NEWSRAW
+    CANDLES --> SP
+    NEWSRAW --> SP
+    SP --> BASELINE
+
+    AGG --> VIEW
+    ALERTS --> VIEW
+    BASELINE --> VIEW
+    VIEW --> APP
+```
+
 ---
 
 ## Project Structure
